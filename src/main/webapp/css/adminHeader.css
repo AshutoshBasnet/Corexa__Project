@@ -1,0 +1,147 @@
+.admin-top-header {
+    width: 100%;
+    min-height: 82px;
+    margin-bottom: 28px;
+    padding: 18px 24px;
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+        #0d0d0d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    animation: adminHeaderFade 650ms ease both;
+}
+
+.admin-header-left span {
+    display: inline-block;
+    margin-bottom: 7px;
+    color: #aaa;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+
+.admin-header-left h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.visit-store-btn {
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 40px;
+    background: #fff;
+    color: #111;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: 0.28s ease;
+}
+
+.visit-store-btn:hover {
+    background: #00aaff;
+    color: #fff;
+    transform: translateY(-3px);
+}
+
+.admin-user-box {
+    min-height: 52px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: 0.28s ease;
+}
+
+.admin-user-box:hover {
+    border-color: rgba(0, 170, 255, 0.45);
+    box-shadow: 0 14px 35px rgba(0, 170, 255, 0.12);
+    transform: translateY(-3px);
+}
+
+.admin-user-image {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    border: 2px solid #00aaff;
+}
+
+.admin-user-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.admin-user-info span {
+    display: block;
+    margin-bottom: 3px;
+    color: #aaa;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.admin-user-info p {
+    margin: 0;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+@keyframes adminHeaderFade {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-top-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .admin-header-right {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .visit-store-btn,
+    .admin-user-box {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,358 @@
+package com.corexa.service;
+
+import java.sql.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.corexa.config.DbConfig;
+import com.corexa.model.ProductModel;
+/**
+ * Service class for handling product-related operations including:
+ * Product creation, update, and deletion, Product retrieval by various criteria and Inventory management
+ */
+public class ProductService {
+	 // Database connection
+    private Connection dbConn;
+    private Boolean hasProductMetadataColumns;
+
+    /**
+      establishes database connection
+     */
+    public ProductService() {
+        try {
+            this.dbConn = DbConfig.getDbConnection();
+        } catch (SQLException | ClassNotFoundException ex) {
+            System.err.println("Database connection error: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    /**
+     * Adds a new product to the database
+     */
+    public boolean addProduct(ProductModel product) {
+        if (dbConn == null) {
+            return false;
+        }
+
+        boolean withMetadata = hasProductMetadataColumns();
+        String sql = withMetadata
+                ? "INSERT INTO product (productName, description, price, quantity, category, productImage, sku, brand, rackNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                : "INSERT INTO product (productName, description, price, quantity, category, productImage) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            bindBaseProductFields(stmt, product);
+            if (withMetadata) {
+                stmt.setString(7, product.getSku());
+                stmt.setString(8, product.getBrand());
+                stmt.setString(9, product.getRackNumber());
+            }
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error adding product: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    /**
+     * Updates an existing product in the database
+     * @param product It is the  ProductModel that contains updated product details
+     * @return true if product was updated successfully, false otherwise
+     */
+    public boolean updateProduct(ProductModel product) {
+        if (dbConn == null) {
+            return false;
+        }
+
+        boolean withMetadata = hasProductMetadataColumns();
+        String sql = withMetadata
+                ? "UPDATE product SET productName = ?, description = ?, price = ?, quantity = ?, category = ?, productImage = ?, sku = ?, brand = ?, rackNumber = ? WHERE product_id = ?"
+                : "UPDATE product SET productName = ?, description = ?, price = ?, quantity = ?, category = ?, productImage = ? WHERE product_id = ?";
+
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            bindBaseProductFields(stmt, product);
+            if (withMetadata) {
+                stmt.setString(7, product.getSku());
+                stmt.setString(8, product.getBrand());
+                stmt.setString(9, product.getRackNumber());
+                stmt.setInt(10, product.getProductId());
+            } else {
+                stmt.setInt(7, product.getProductId());
+            }
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating product: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    /**
+     * Deletes a product from the database
+     * @param productId It is the  ID of the product to delete
+     * @return true if product was deleted successfully, false otherwise
+     */
+    public boolean deleteProduct(int productId) {
+        String sql = "DELETE FROM product WHERE product_id = ?";
+
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting product: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    /**
+     * Retrieves a single product by its ID
+     * @param productId TIt is the ID of the product to retrieve
+     * @return ProductModel if found, null otherwise
+     */
+    public ProductModel getProductById(int productId) {
+        String sql = "SELECT * FROM product WHERE product_id = ?";
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return mapProduct(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving product: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+    /**
+     * Retrieves all products from the database
+     * @return list of all ProductModel objects
+     */
+    public List<ProductModel> getAllProducts() {
+        List<ProductModel> products = new ArrayList<>();
+        String sql = "SELECT * FROM product";
+
+        try (Statement stmt = dbConn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                products.add(mapProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+    
+    /**
+     * Retrieves some products from the database
+     * @return list of all ProductModel objects
+     */
+    public List<ProductModel> getSomeProducts() {
+        List<ProductModel> products = new ArrayList<>();
+        String sql = "SELECT * FROM product ORDER BY product_id DESC LIMIT 12";
+
+        try (Statement stmt = dbConn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                products.add(mapProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+    
+    /**
+     * Retrieves few products from the database
+     * @return list of all ProductModel objects
+     */
+    public List<ProductModel> getFewProducts() {
+        List<ProductModel> products = new ArrayList<>();
+        String sql = "SELECT * FROM product ORDER BY product_id DESC LIMIT 8";
+
+        try (Statement stmt = dbConn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                products.add(mapProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+    
+    /**
+     * Retrieves the  recently added products
+     * @return list of recent ProductModel objects
+     */
+    public List<ProductModel> getRecentProducts() {
+        List<ProductModel> recentProducts = new ArrayList<>();
+        String sql = "SELECT * FROM product ORDER BY product_id DESC LIMIT 3";
+
+        try (Statement stmt = dbConn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                recentProducts.add(mapProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return recentProducts;
+    }
+    /**
+     * Retrieves products belonging to a specific category
+     * @param category It is the  category used  to filter  the products
+     * @return list of ProductModel objects in the specified category
+     */
+    public List<ProductModel> getProductsByCategory(String category) {
+        List<ProductModel> products = new ArrayList<>();
+        String sql = "SELECT * FROM product WHERE category = ?";
+
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            stmt.setString(1, category);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                products.add(mapProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products by category: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+    /**
+     * Searches for products by name or category
+     * @param search It  search for in product names or categories
+     * @return list of ProductModel objects matching the search criteria
+     */
+    public List<ProductModel> getProductsBySearch(String search) {
+        List<ProductModel> products = new ArrayList<>();
+        boolean withMetadata = hasProductMetadataColumns();
+        String sql = withMetadata
+                ? "SELECT * FROM product WHERE productName LIKE ? OR category LIKE ? OR description LIKE ? OR sku LIKE ? OR brand LIKE ?"
+                : "SELECT * FROM product WHERE productName LIKE ? OR category LIKE ? OR description LIKE ?";
+
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            String pattern = "%" + search + "%";
+        	stmt.setString(1, pattern);
+            stmt.setString(2, pattern);
+            stmt.setString(3, pattern);
+            if (withMetadata) {
+                stmt.setString(4, pattern);
+                stmt.setString(5, pattern);
+            }
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                products.add(mapProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products by productName: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+
+    public boolean isSkuExists(String sku, int excludedProductId) throws SQLException {
+        if (isBlank(sku) || !hasProductMetadataColumns()) {
+            return false;
+        }
+
+        String sql = "SELECT COUNT(*) FROM product WHERE sku = ? AND product_id <> ?";
+        try (PreparedStatement stmt = dbConn.prepareStatement(sql)) {
+            stmt.setString(1, sku);
+            stmt.setInt(2, excludedProductId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    private void bindBaseProductFields(PreparedStatement stmt, ProductModel product) throws SQLException {
+        stmt.setString(1, product.getProductName());
+        stmt.setString(2, product.getDescription());
+        stmt.setDouble(3, product.getPrice());
+        stmt.setInt(4, product.getQuantity());
+        stmt.setString(5, product.getCategory());
+        stmt.setString(6, product.getProductImage());
+    }
+
+    private ProductModel mapProduct(ResultSet rs) throws SQLException {
+        return new ProductModel(
+                rs.getInt("product_id"),
+                rs.getString("productName"),
+                rs.getString("description"),
+                rs.getDouble("price"),
+                rs.getInt("quantity"),
+                rs.getString("category"),
+                rs.getString("productImage"),
+                getOptionalString(rs, "sku"),
+                getOptionalString(rs, "brand"),
+                getOptionalString(rs, "rackNumber")
+        );
+    }
+
+    private String getOptionalString(ResultSet rs, String columnName) throws SQLException {
+        ResultSetMetaData metadata = rs.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+            if (columnName.equalsIgnoreCase(metadata.getColumnLabel(i))) {
+                return rs.getString(columnName);
+            }
+        }
+        return null;
+    }
+
+    private boolean hasProductMetadataColumns() {
+        if (hasProductMetadataColumns != null) {
+            return hasProductMetadataColumns;
+        }
+
+        if (dbConn == null) {
+            hasProductMetadataColumns = false;
+            return false;
+        }
+
+        try {
+            DatabaseMetaData metadata = dbConn.getMetaData();
+            boolean hasSku = hasColumn(metadata, "product", "sku");
+            boolean hasBrand = hasColumn(metadata, "product", "brand");
+            boolean hasRackNumber = hasColumn(metadata, "product", "rackNumber");
+            hasProductMetadataColumns = hasSku && hasBrand && hasRackNumber;
+        } catch (SQLException e) {
+            hasProductMetadataColumns = false;
+        }
+
+        return hasProductMetadataColumns;
+    }
+
+    private boolean hasColumn(DatabaseMetaData metadata, String tableName, String columnName) throws SQLException {
+        try (ResultSet columns = metadata.getColumns(dbConn.getCatalog(), null, tableName, columnName)) {
+            if (columns.next()) {
+                return true;
+            }
+        }
+
+        try (ResultSet columns = metadata.getColumns(dbConn.getCatalog(), null, tableName, columnName.toLowerCase())) {
+            return columns.next();
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+}
