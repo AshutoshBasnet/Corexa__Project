@@ -1,0 +1,68 @@
+# =========================
+# Maven / Java build files
+# =========================
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# =========================
+# Eclipse / Dynamic Web Project
+# =========================
+.classpath
+.project
+.settings/
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+
+# =========================
+# IntelliJ IDEA
+# =========================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# NetBeans
+# =========================
+nbproject/private/
+build/
+dist/
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+*.properties.local
+
+# =========================
+# Uploaded/generated files
+# =========================
+uploads/
+generated/
